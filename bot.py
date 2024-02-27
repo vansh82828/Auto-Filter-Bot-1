@@ -1,70 +1,67 @@
+import logging
+import logging.config
+
+# Get logging configurations
+logging.config.fileConfig('logging.conf')
+logging.getLogger().setLevel(logging.INFO)
+logging.getLogger("pyrogram").setLevel(logging.ERROR)
+logging.getLogger("cinemagoer").setLevel(logging.ERROR)
+
 from pyrogram import Client, __version__
+from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
-from aiohttp import web
 from database.users_chats_db import db
-from web import web_app
-from info import LOG_CHANNEL, API_ID, API_HASH, BOT_TOKEN, PORT, BIN_CHANNEL
+from info import SESSION, LOG_CHANNEL, API_ID, API_HASH, BOT_TOKEN, LOG_STR
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
-import time, os, platform
-from pyrogram.errors import AccessTokenExpired, AccessTokenInvalid
-
 
 class Bot(Client):
+
     def __init__(self):
         super().__init__(
             name='Auto_Filter_Bot',
             api_id=API_ID,
             api_hash=API_HASH,
             bot_token=BOT_TOKEN,
-            plugins={"root": "plugins"}
+            workers=50,
+            plugins={"root": "plugins"},
+            sleep_threshold=5,
         )
 
     async def start(self):
-        temp.START_TIME = time.time()
         b_users, b_chats = await db.get_banned()
+        temp.START_TIME = time.time()
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
         await super().start()
-        if os.path.exists('restart.txt'):
-            with open("restart.txt") as file:
-                chat_id, msg_id = map(int, file)
-            try:
-                await self.edit_message_text(chat_id=chat_id, message_id=msg_id, text='Restarted Successfully!')
-            except:
-                pass
-            os.remove('restart.txt')
-        temp.BOT = self
         await Media.ensure_indexes()
         me = await self.get_me()
         temp.ME = me.id
+        temp.BOT = self
         temp.U_NAME = me.username
         temp.B_NAME = me.first_name
-        username = '@' + me.username
-        app = web.AppRunner(web_app)
-        await app.setup()
-        await web.TCPSite(app, "0.0.0.0", PORT).start()
-        try:
-            await self.send_message(chat_id=LOG_CHANNEL, text=f"<b>{me.mention} Restarted! 🤖</b>")
-        except:
-            print("Error - Make sure bot admin in LOG_CHANNEL, exiting now")
-            exit()
-        try:
-            m = await self.send_message(chat_id=BIN_CHANNEL, text="Test")
-            await m.delete()
-        except:
-            print("Error - Make sure bot admin in BIN_CHANNEL, exiting now")
-            exit()
-        print(f"\nPyrogram [v{__version__}] Bot [{username}] Started With Python [v{platform.python_version()}]\n")
-
+        self.username = '@' + me.username
+        logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
+        logging.info(LOG_STR)
+        await self.send_message(chat_id=LOG_CHANNEL, text=f"<b>{me.mention} Restarted! 🤖</b>")
+        chats = await db.get_all_chats()
+        async for chat in chats:
+            try:
+                await self.send_message(chat_id=chat['id'], text="Bot Restarted! 🤖")
+            except:
+                pass
 
     async def stop(self, *args):
         await super().stop()
-        print("Bot Stopped! Bye...")
-
-
-    async def iter_messages(self: Client, chat_id: Union[int, str], limit: int, offset: int = 0) -> Optional[AsyncGenerator["types.Message", None]]:
+        logging.info("Bot stopped! Bye...")
+    
+    async def iter_messages(
+        self,
+        chat_id: Union[int, str],
+        limit: int,
+        offset: int = 0,
+    ) -> Optional[AsyncGenerator["types.Message", None]]:
         """Iterate through a chat sequentially.
         This convenience method does the same as repeatedly calling :meth:`~pyrogram.Client.get_messages` in a loop, thus saving
         you from the hassle of setting up boilerplate code. It is useful for getting the whole chat messages with a
@@ -85,7 +82,7 @@ class Bot(Client):
             ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
         Example:
             .. code-block:: python
-                async for message in app.iter_messages("pyrogram", 1000, 100):
+                for message in app.iter_messages("pyrogram", 1, 15000):
                     print(message.text)
         """
         current = offset
@@ -97,6 +94,7 @@ class Bot(Client):
             for message in messages:
                 yield message
                 current += 1
+
 
 app = Bot()
 app.run()
