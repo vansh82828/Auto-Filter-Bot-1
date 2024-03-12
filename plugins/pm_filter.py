@@ -42,24 +42,38 @@ async def give_filter(client, message):
     settings = await get_settings(message.chat.id)
     chatid = message.chat.id
     userid = message.from_user.id if message.from_user else None
-    if GROUP_FSUB:
-        btn = await is_subscribed(client, message, settings['fsub']) if settings.get('is_fsub', IS_FSUB) else None
-        if btn:
-            btn.append(
-                [InlineKeyboardButton("Unmute Me 🔕", callback_data=f"unmuteme#{chatid}")]
-            )
-            reply_markup = InlineKeyboardMarkup(btn)
-            try:
-                await client.restrict_chat_member(chatid, message.from_user.id, ChatPermissions(can_send_messages=False))
-                await message.reply_photo(
-                    photo=random.choice(PICS),
-                    caption=f"👋 Hello {message.from_user.mention},\n\nPlease join and try again. 😇",
-                    reply_markup=reply_markup,
-                    parse_mode=enums.ParseMode.HTML
+    fsub = settings["fsub"]
+    if settings.get("is_fsub", IS_FSUB) and fsub is not None:
+        try:
+            btn = await is_subscribed(client, message, int(fsub))
+            if btn:
+                btn.append(
+                    [
+                        InlineKeyboardButton(
+                            "Unmute Me 🔕", callback_data=f"unmuteme#{chatid}"
+                        )
+                    ]
                 )
-                return
-            except Exception as e:
-                print(e)
+                reply_markup = InlineKeyboardMarkup(btn)
+                try:
+                    await client.restrict_chat_member(
+                        chatid,
+                        message.from_user.id,
+                        ChatPermissions(can_send_messages=False),
+                    )
+                    await message.reply_photo(
+                        photo=random.choice(PICS),
+                        caption=f"👋 Hello {message.from_user.mention},\n\nPlease join and try again. 😇",
+                        reply_markup=reply_markup,
+                        parse_mode=enums.ParseMode.HTML,
+                    )
+                    return
+                except Exception as e:
+                    print(e)
+            else:
+                pass
+        except:
+            pass
     else:
         pass
     if settings["auto_filter"]:
@@ -67,64 +81,84 @@ async def give_filter(client, message):
             await message.reply("I'm not working for anonymous admin!")
             return
         if message.chat.id == SUPPORT_GROUP:
-            files, offset, total = await get_search_results(message.text)
+            files, offset, total = await get_search_results(
+                message.chat.id, message.text
+            )
             if files:
-                btn = [[
-                    InlineKeyboardButton("Here", url=FILMS_LINK)
-                ]]
-                await message.reply_text(f'Total {total} results found in this group', reply_markup=InlineKeyboardMarkup(btn))
+                btn = [[InlineKeyboardButton("Here", url=FILMS_LINK)]]
+                await message.reply_text(
+                    f"Total {total} results found in this group",
+                    reply_markup=InlineKeyboardMarkup(btn),
+                )
             return
-            
+
         if message.text.startswith("/"):
             return
-            
-        elif '@admin' in message.text.lower() or '@admins' in message.text.lower():
+
+        elif "@admin" in message.text.lower() or "@admins" in message.text.lower():
             if await is_check_admin(client, message.chat.id, message.from_user.id):
                 return
             admins = []
-            async for member in client.get_chat_members(chat_id=message.chat.id, filter=enums.ChatMembersFilter.ADMINISTRATORS):
+            async for member in client.get_chat_members(
+                chat_id=message.chat.id, filter=enums.ChatMembersFilter.ADMINISTRATORS
+            ):
                 if not member.user.is_bot:
                     admins.append(member.user.id)
                     if member.status == enums.ChatMemberStatus.OWNER:
                         if message.reply_to_message:
                             try:
-                                sent_msg = await message.reply_to_message.forward(member.user.id)
-                                await sent_msg.reply_text(f"#Attention\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ <a href={message.reply_to_message.link}>Go to message</a>", disable_web_page_preview=True)
+                                sent_msg = await message.reply_to_message.forward(
+                                    member.user.id
+                                )
+                                await sent_msg.reply_text(
+                                    f"#Attention\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ <a href={message.reply_to_message.link}>Go to message</a>",
+                                    disable_web_page_preview=True,
+                                )
                             except:
                                 pass
                         else:
                             try:
                                 sent_msg = await message.forward(member.user.id)
-                                await sent_msg.reply_text(f"#Attention\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ <a href={message.link}>Go to message</a>", disable_web_page_preview=True)
+                                await sent_msg.reply_text(
+                                    f"#Attention\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ <a href={message.link}>Go to message</a>",
+                                    disable_web_page_preview=True,
+                                )
                             except:
                                 pass
-            hidden_mentions = (f'[\u2064](tg://user?id={user_id})' for user_id in admins)
-            await message.reply_text('Report sent!' + ''.join(hidden_mentions))
+            hidden_mentions = (
+                f"[\u2064](tg://user?id={user_id})" for user_id in admins
+            )
+            await message.reply_text("Report sent!" + "".join(hidden_mentions))
             return
 
-        elif re.findall(r'https?://\S+|www\.\S+|t\.me/\S+', message.text):
+        elif re.findall(r"https?://\S+|www\.\S+|t\.me/\S+", message.text):
             if await is_check_admin(client, message.chat.id, message.from_user.id):
                 return
             await message.delete()
-            return await message.reply('Links not allowed here!')
-        
-        elif '#request' in message.text.lower():
+            return await message.reply("Links not allowed here!")
+
+        elif "#request" in message.text.lower():
             if message.from_user.id in ADMINS:
                 return
-            await client.send_message(LOG_CHANNEL, f"#Request\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ Message: {re.sub(r'#request', '', message.text.lower())}")
+            await client.send_message(
+                LOG_CHANNEL,
+                f"#Request\n★ User: {message.from_user.mention}\n★ Group: {message.chat.title}\n\n★ Message: {re.sub(r'#request', '', message.text.lower())}",
+            )
             await message.reply_text("Request sent!")
             return
-            
+
         else:
             await auto_filter(client, message)
     else:
-        k = await message.reply_text('Auto Filter Off! ❌')
+        k = await message.reply_text("Auto Filter Off! ❌")
         await asyncio.sleep(5)
         await k.delete()
         try:
             await message.delete()
         except:
             pass
+
+
 
 @Client.on_message(filters.private & filters.text)
 async def pm_search(client, message):
