@@ -119,13 +119,13 @@ if len(BIN_CHANNEL) == 0:
     exit()
 else:
     BIN_CHANNEL = int(BIN_CHANNEL)
-URL = environ.get("URL", "") #if heroku then paste the app link here ex: https://heroku......./
+URL = environ.get("URL", "https://paidc-171a9af72e95.herokuapp.com/") #if heroku then paste the app link here ex: https://heroku......./
 if len(URL) == 0:
     print('Error - URL is missing, exiting now')
     exit()
 else:
     if URL.startswith(('https://', 'http://')):
-        if not URL.endswith("/"):
+        if not URL.endswith("paidc-171a9af72e95.herokuapp.com/"):
             URL += '/'
     elif is_valid_ip(URL):
         URL = f'http://{URL}/'
