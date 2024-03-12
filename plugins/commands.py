@@ -64,6 +64,11 @@ async def start(client, message):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+        await message.reply_text(
+            text="Hello Mere Bhai",
+            reply_markup=reply_markup,
+            parse_mode=enums.ParseMode.HTML
+        )
         return
 
     mc = message.command[1]
