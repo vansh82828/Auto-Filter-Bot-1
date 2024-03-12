@@ -8,9 +8,9 @@ class script(object):
 ★ Language: <a href=https://www.python.org>Python</a>
 ★ Library: <a href=https://pyrogram.org>Pyrogram</a>"""
 
-    MY_OWNER_TXT = """★ Name: 𝐕𝐚𝐧𝐬𝐡 𝐘𝐚𝐝𝐚𝐯
-★ Username: @none_090
-★ Update Channel : 𝐕𝐚𝐧𝐬𝐡 𝐁𝐨𝐭𝐬"""
+    MY_OWNER_TXT = """★ Name: 𝐒𝐇𝐈𝐕𝐀 𝐂𝐇𝐀𝐑𝐀𝐍
+★ Username: @Shivacharan7773
+★ Update Channel : 𝐒𝐇𝐈𝐕𝐀 𝐂𝐇𝐀𝐑𝐀𝐍"""
 
     STATUS_TXT = """🗂 Total Files: <code>{}</code>
 👤 Total Users: <code>{}</code>
@@ -138,6 +138,6 @@ I can't find the <b>{}</b> in my database! 🥲
 
 - ᴛʜɪꜱ ʙᴏᴛ ɪꜱ ᴀɴ ᴏᴘᴇɴ ꜱᴏᴜʀᴄᴇ ᴘʀᴏᴊᴇᴄᴛ.
 
-- ꜱᴏᴜʀᴄᴇ - <a href=https://t.me/none_090>ʜᴇʀᴇ</a>
+- ꜱᴏᴜʀᴄᴇ - <a href=https://t.me/Shivacharan7773>ʜᴇʀᴇ</a>
 
-- ᴅᴇᴠʟᴏᴘᴇʀ - @none_090"""
+- ᴅᴇᴠʟᴏᴘᴇʀ - 𝐒𝐇𝐈𝐕𝐀 𝐂𝐇𝐀𝐑𝐀𝐍"""
